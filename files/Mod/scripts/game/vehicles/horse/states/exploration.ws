@@ -159,6 +159,8 @@ state Exploration in W3HorseComponent
 		{
 			speedLocks.Remove( lockName );
 			// RDRHorseControls+++
+			// This part of the code made removing any speed lock active gallop speed, if your speed less than gallop.
+			// Commented out for better speed controll.
 			/*
 			if( !speedLocks.Contains( 'OnStop' ) && lockName != 'OnGallop' && theInput.IsActionPressed( 'Gallop' ) && !dismountRequest && currSpeed <= GALLOP_SPEED )
 			{
@@ -619,6 +621,8 @@ state Exploration in W3HorseComponent
 			}
 			// RDRHorseControls+++
 			/*
+			// This part stoped the horse when stick pulled back.
+			// Commented out for better speed controll.
 			else if( inputMagnitude >= 0.9 && ( useLocalSpace && AbsF(dir) >= 0.75f ) || ( !useLocalSpace && AbsF( dir ) > 0.75f && AbsF( prevDir ) < 0.17f && destSpeed > MIN_SPEED ) && !parent.IsInCustomSpot() )
 			{
 				parent.InternalSetRotation( 0.f );
@@ -664,6 +668,8 @@ state Exploration in W3HorseComponent
             else if( !IsSpeedLocked() && stickInput && currSpeed < GALLOP_SPEED && ( currSpeed > MIN_SPEED || AbsF( dir ) < 0.05 ) )
 			{
 				// RDRHorseControls+++
+				// When using left stick max speed will be walk speed.
+				// Also half left stick position for slow speed.
 				if( currSpeed <= WALK_SPEED && destSpeed != TROT_SPEED )
 				{
 					if ( inputMagnitude > INPUTMAG_WALK )
@@ -745,7 +751,16 @@ state Exploration in W3HorseComponent
 		// else
 		// 	return false;
 		*/
-		return true;
+
+		// Don't follow road, if left stick has input.
+		if( !stickInputX && !stickInputY )
+		{
+			return true;
+		}	
+		else
+		{
+			return false;
+		}
 		// RDRHorseControls---
 
 	}
@@ -815,6 +830,7 @@ state Exploration in W3HorseComponent
 			correctedDirV = VecNormalize2D( inputVector * 0.3 + horseHeadingVec * 0.7 );
 		}
 		// RDRHorseControls+++
+		// Follow road behavior on slow speeds.
 		/*
 		else
 		{
@@ -1146,7 +1162,7 @@ state Exploration in W3HorseComponent
 	const var WATER_DIST_GALLOP : float;
 	const var WATER_DIST_CANTER : float;
 	
-	default WATER_MAX_DEPTH = 1.4; // RDRHorseControls
+	default WATER_MAX_DEPTH = 1.4; // RDRHorseControls: increse max depth of water that horse can enter.
 	default WATER_DIST_TROT = 3.0;
 	default WATER_DIST_GALLOP = 8.0;
 	default WATER_DIST_CANTER = 10.0;
@@ -1682,6 +1698,7 @@ state Exploration in W3HorseComponent
 		
 		destSpeed = MinF( destSpeed, speedRestriction );
 		// RDRHorseControls+++
+		// Don't play slow down horse voice over.
 		/*
 		if( currSpeed > destSpeed && currSpeed < GALLOP_SPEED )
 			PlayVoicesetSlowerHorse();
@@ -2008,6 +2025,7 @@ state Exploration in W3HorseComponent
 			if( IsPressed( action ) )			
 			{
 				// RDRHorseControls+++
+				// New behavier when A button pressed.
 				/*
 				if( accelerateTimestamp + DOUBLE_TAP_WINDOW >= theGame.GetEngineTimeAsSeconds() )
 				{
@@ -2018,6 +2036,7 @@ state Exploration in W3HorseComponent
 					triedDoubleTap = false;
 				}
 				*/
+				// Accelerate only if pressed frequently, else only play animation and extend slow down window.
 				if ( accelerateTimestamp + 1.0 >= theGame.GetEngineTimeAsSeconds() || currSpeed <= WALK_SPEED )
 				{
 					switch ( currSpeed )
@@ -2079,6 +2098,7 @@ state Exploration in W3HorseComponent
 		if( IsHorseControllable() && IsPressed( action ) && !dismountRequest )
 		{	
 		// RDRHorseControls+++
+		// Maintain the speed when A hold.
 			ToggleSpeedLock( 'SpeedHold', true );
 			/*
 			if ( !IsSpeedLocked() && OnCanCanter() )
@@ -2105,6 +2125,8 @@ state Exploration in W3HorseComponent
 	event OnDecelerate( action : SInputAction )
 	{
 		// RDRHorseControls+++
+		// Decelerate on B press.
+		// Play slow down voice over on high speeds.
 		if( IsPressed( action ) && IsHorseControllable() && !dismountRequest ) {
 			switch ( currSpeed )
 			{
@@ -2226,6 +2248,7 @@ state Exploration in W3HorseComponent
 			parent.user.SetBehaviorVariable('dismountType',0.f);
 		}
 		// RDRHorseControls+++
+		// Fixes landing in horse ass when dismounting at high speeds.
 		else if( currSpeed >= GALLOP_SPEED && VecLength2D( GetHorseVelocity() ) > 6.0 )
 		{
 			parent.user.SetBehaviorVariable('dismountType',2.f);
@@ -2300,6 +2323,7 @@ state Exploration in W3HorseComponent
 		switch( currSpeed )
 		{
 			// RDRHorseControls+++
+			// When to speed down if spur not pressed.
 			case CANTER_SPEED:
 				if ( dismountRequest )
 					speedTimeoutValue = 1.0;
@@ -2403,6 +2427,8 @@ state Exploration in W3HorseComponent
 	private function SpursKick()
 	{
 		// RDRHorseControls+++
+		// Play spur animation.
+		// Play faster horse voice over on high speed.
 		if( !IsRiderInCombatAction() && currSpeed < destSpeed )
 		{
 			if( destSpeed >= GALLOP_SPEED )
@@ -2426,9 +2452,9 @@ state Exploration in W3HorseComponent
 	private var voicsetFasterTimeStamp : float;
 	private var voicsetSlowerTimeSTamp : float;
 	
-	private const var VOICESET_COOLDOWN 		: float; default VOICESET_COOLDOWN			= 10.0; // RDRHorseControls
-	private const var VOICESET_FASTER_COOLDOWN 	: float; default VOICESET_FASTER_COOLDOWN	= 10.0; // RDRHorseControls
-	private const var VOICESET_SLOWER_COOLDOWN 	: float; default VOICESET_SLOWER_COOLDOWN	= 10.0; // RDRHorseControls
+	private const var VOICESET_COOLDOWN 		: float; default VOICESET_COOLDOWN			= 10.0; // RDRHorseControls: don't say voice over too frequently.
+	private const var VOICESET_FASTER_COOLDOWN 	: float; default VOICESET_FASTER_COOLDOWN	= 10.0; // RDRHorseControls: don't say voice over too frequently.
+	private const var VOICESET_SLOWER_COOLDOWN 	: float; default VOICESET_SLOWER_COOLDOWN	= 10.0; // RDRHorseControls: don't say voice over too frequently.
 	
 	private function PlayVoicesetFasterHorse()
 	{
