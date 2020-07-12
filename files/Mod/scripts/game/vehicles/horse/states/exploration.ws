@@ -89,7 +89,7 @@ state Exploration in W3HorseComponent
 		
 		mac.SetEnabledFeetIK(true);
 		
-		theGame.GetGuiManager().EnableHudHoldIndicator(IK_Pad_B_CIRCLE, IK_None, "panel_input_action_horsedismount", 0.4, 'HorseDismount');
+		theGame.GetGuiManager().EnableHudHoldIndicator(IK_Pad_Y_TRIANGLE, IK_None, "panel_input_action_horsedismount", 0.4, 'HorseDismount'); // RDRHorseControls
 		
 		grassCollider = parent.GetEntity().GetComponent( "CDynamicColliderComponent4" );
 	}
@@ -158,7 +158,8 @@ state Exploration in W3HorseComponent
 		else
 		{
 			speedLocks.Remove( lockName );
-			
+			// RDRHorseControls+++
+			/*
 			if( !speedLocks.Contains( 'OnStop' ) && lockName != 'OnGallop' && theInput.IsActionPressed( 'Gallop' ) && !dismountRequest && currSpeed <= GALLOP_SPEED )
 			{
 				if( shouldGoToCanterAfterStop )
@@ -167,6 +168,8 @@ state Exploration in W3HorseComponent
 				}
 				GallopPressed();
 			}
+			*/
+			// RDRHorseControls---
 		}
 	}
 	
@@ -482,7 +485,7 @@ state Exploration in W3HorseComponent
 		
 		theGame.ReleaseNoSaveLock( noSaveLock );		
 		
-		theGame.GetGuiManager().EnableHudHoldIndicator(IK_Pad_B_CIRCLE, IK_None, "panel_input_action_horsedismount", 0.4, 'HorseDismount');
+		theGame.GetGuiManager().EnableHudHoldIndicator(IK_Pad_Y_TRIANGLE, IK_None, "panel_input_action_horsedismount", 0.4, 'HorseDismount'); // RDRHorseControls
 	}
 	
 	private final function ResetRotation()
@@ -495,11 +498,11 @@ state Exploration in W3HorseComponent
 	
 	
 	
-	private const var INPUTMAG_TROT : float;
+	// private const var INPUTMAG_TROT : float; // RDRHorseControls
 	private const var INPUTMAG_WALK : float;
 	
-	default INPUTMAG_TROT = 0.9;
-	default INPUTMAG_WALK = 0.6;
+	// default INPUTMAG_TROT = 0.9; // RDRHorseControls
+	default INPUTMAG_WALK = 0.9; // RDRHorseControls
 	
 	private final function ProcessControlInput( lr : float, fb : float, timeDelta : float, useLocalSpace : bool )
 	{
@@ -513,7 +516,7 @@ state Exploration in W3HorseComponent
 		var prevDir	: float;
 		var steeringCorrection : bool;
 		var stickInput : bool;
-		
+
 		if( ( !thePlayer.GetIsMovable() && !dismountRequest ) || speedRestriction == MIN_SPEED )
 		{
 			destSpeed = MIN_SPEED;
@@ -614,7 +617,8 @@ state Exploration in W3HorseComponent
 				parent.InternalSetRotation( 0.f );
 				parent.InternalSetDirection( 0.f );
 			}
-			
+			// RDRHorseControls+++
+			/*
 			else if( inputMagnitude >= 0.9 && ( useLocalSpace && AbsF(dir) >= 0.75f ) || ( !useLocalSpace && AbsF( dir ) > 0.75f && AbsF( prevDir ) < 0.17f && destSpeed > MIN_SPEED ) && !parent.IsInCustomSpot() )
 			{
 				parent.InternalSetRotation( 0.f );
@@ -623,6 +627,8 @@ state Exploration in W3HorseComponent
 				braking = true;
 				PlayVoicesetSlowerHorse();
 			}
+			*/
+			// RDRHorseControls---
 			else if( parent.riderSharedParams.mountStatus != VMS_mountInProgress )
 			{
 				
@@ -653,27 +659,26 @@ state Exploration in W3HorseComponent
 			
 			if( braking )
 			{
+
 			}
-			else if( !IsSpeedLocked() && stickInput && currSpeed < GALLOP_SPEED && ( currSpeed > MIN_SPEED || AbsF( dir ) < 0.05 ) )
+            else if( !IsSpeedLocked() && stickInput && currSpeed < GALLOP_SPEED && ( currSpeed > MIN_SPEED || AbsF( dir ) < 0.05 ) )
 			{
-				if( currSpeed < TROT_SPEED )
+				// RDRHorseControls+++
+				if( currSpeed <= WALK_SPEED && destSpeed != TROT_SPEED )
 				{
-					if( inputMagnitude > INPUTMAG_TROT )
-					{
-						destSpeed = TROT_SPEED;
-					}
-					else if( inputMagnitude > INPUTMAG_WALK )
+					if ( inputMagnitude > INPUTMAG_WALK )
 					{
 						destSpeed = WALK_SPEED;
+						SpursKick();
 					}
 					else
 					{
 						destSpeed = SLOW_SPEED;
 					}
-					
-					SpursKick();
+
 					speedImpulseTimestamp = theGame.GetEngineTimeAsSeconds();
 				}	
+				// RDRHorseControls---
 			}			
 		}
 		else
@@ -713,30 +718,35 @@ state Exploration in W3HorseComponent
 		var horseHeading : float;
 		var angleDistanceBetweenInputAndHorse : float;
 
-		inputVec = GetInputVectorInCamSpace( stickInputX, stickInputY );
-		angleDistanceBetweenInputAndHorse = AbsF( AngleDistance( VecHeading( inputVec ), parent.GetHeading() ) );
+		// RDRHorseControls+++
+		/*
+		// inputVec = GetInputVectorInCamSpace( stickInputX, stickInputY );
+		// angleDistanceBetweenInputAndHorse = AbsF( AngleDistance( VecHeading( inputVec ), parent.GetHeading() ) );
 
-		if( !stickInputX && !stickInputY )
-		{
-			if( theInput.IsActionPressed( 'Canter' ) )
-				return true;
-			else
-				return false;
-		}	
-		else if( currSpeed > TROT_SPEED && angleDistanceBetweenInputAndHorse > 55.0 )
-		{
-			return false;
-		}
-		else if( currSpeed > MIN_SPEED && angleDistanceBetweenInputAndHorse < 55.0 )
-		{
-			return true;
-		}
-		else if( isStopping )
-		{
-			return true;
-		}
-		else
-			return false;
+		// if( !stickInputX && !stickInputY )
+		// {
+		// 	if( theInput.IsActionPressed( 'Canter' ) )
+		// 		return true;
+		// 	else
+		// 		return false;
+		// }	
+		// else if( currSpeed > TROT_SPEED && angleDistanceBetweenInputAndHorse > 55.0 )
+		// {
+		// 	return false;
+		// }
+		// else if( currSpeed > MIN_SPEED && angleDistanceBetweenInputAndHorse < 55.0 )
+		// {
+		// 	return true;
+		// }
+		// else if( isStopping )
+		// {
+		// 	return true;
+		// }
+		// else
+		// 	return false;
+		*/
+		return true;
+		// RDRHorseControls---
 
 	}
 	
@@ -804,6 +814,8 @@ state Exploration in W3HorseComponent
 			
 			correctedDirV = VecNormalize2D( inputVector * 0.3 + horseHeadingVec * 0.7 );
 		}
+		// RDRHorseControls+++
+		/*
 		else
 		{
 			speed = 3.75 * speedModifier; 
@@ -812,7 +824,23 @@ state Exploration in W3HorseComponent
 			
 			correctedDirV = VecNormalize2D( inputVector * 0.4 + horseHeadingVec * 0.6 );
 		}
+		*/
+		else if( currSpeed == TROT_SPEED || currSpeed == WALK_SPEED || currSpeed == SLOW_SPEED )
+		{		
+			followRoad = true;		
 		
+			speed = 0.4 * speedModifier; 
+			dirModifier = 1.5;
+			maxAngleForAdjustingDir = 90.0;
+			
+			correctedDirV = VecNormalize2D( inputVector * 0.4 + horseHeadingVec * 0.6 );	
+		}
+		else if (currSpeed == MIN_SPEED)
+		{
+			followRoad = false;
+		}
+		// RDRHorseControls---
+	
 		cachedVec = correctedDirV;
 		
 		desiredDirectionVec = inputVector;
@@ -832,7 +860,7 @@ state Exploration in W3HorseComponent
 		}
 		else
 		{
-			if( currSpeed > TROT_SPEED )
+			if( currSpeed > WALK_SPEED ) // RDRHorseControls
 			{
 				isFollowingRoad = true; 
 			}
@@ -1118,7 +1146,7 @@ state Exploration in W3HorseComponent
 	const var WATER_DIST_GALLOP : float;
 	const var WATER_DIST_CANTER : float;
 	
-	default WATER_MAX_DEPTH = 1.0;
+	default WATER_MAX_DEPTH = 1.4; // RDRHorseControls
 	default WATER_DIST_TROT = 3.0;
 	default WATER_DIST_GALLOP = 8.0;
 	default WATER_DIST_CANTER = 10.0;
@@ -1625,7 +1653,7 @@ state Exploration in W3HorseComponent
 		MaintainCameraVariables( dt );
 		MaintainGrassCollider();
 		
-		if( ( !useSimpleStaminaManagement && destSpeed > GALLOP_SPEED ) || ( !IsSpeedLocked() && destSpeed > MIN_SPEED && !rl && !fb ) || ( !IsSpeedLocked() && destSpeed > TROT_SPEED ) )
+		if( ( !useSimpleStaminaManagement && destSpeed > GALLOP_SPEED ) || ( !IsSpeedLocked() && destSpeed > MIN_SPEED && !rl && !fb ) || ( !IsSpeedLocked() && destSpeed > WALK_SPEED ) ) // RDRHorseControls
 		{
 			if( maintainSpeedTimer > speedTimeoutValue )
 			{
@@ -1653,9 +1681,12 @@ state Exploration in W3HorseComponent
 		}
 		
 		destSpeed = MinF( destSpeed, speedRestriction );
-		
+		// RDRHorseControls+++
+		/*
 		if( currSpeed > destSpeed && currSpeed < GALLOP_SPEED )
 			PlayVoicesetSlowerHorse();
+		*/
+		// RDRHorseControls---
 		
 		ProcessControlInput( rl, fb, dt, parent.IsControllableInLocalSpace() || parent.riderSharedParams.mountStatus == VMS_mountInProgress );
 
@@ -1874,7 +1905,7 @@ state Exploration in W3HorseComponent
 		isInJumpAnim = false;
 		theGame.ReleaseNoSaveLock( noSaveLock );
 		if ( parent.user == thePlayer )
-			theGame.GetGuiManager().EnableHudHoldIndicator(IK_Pad_B_CIRCLE, IK_None, "panel_input_action_horsedismount", 0.4, 'HorseDismount');
+			theGame.GetGuiManager().EnableHudHoldIndicator(IK_Pad_Y_TRIANGLE, IK_None, "panel_input_action_horsedismount", 0.4, 'HorseDismount'); // RDRHorseControls
 	}
 	
 	event OnHideHorse()
@@ -1926,7 +1957,7 @@ state Exploration in W3HorseComponent
 			
 			theGame.VibrateControllerLight();	
 			if ( parent.user == thePlayer )
-				theGame.GetGuiManager().EnableHudHoldIndicator(IK_Pad_B_CIRCLE, IK_None, "panel_input_action_horsedismount", 0.4, 'HorseDismount');
+				theGame.GetGuiManager().EnableHudHoldIndicator(IK_Pad_Y_TRIANGLE, IK_None, "panel_input_action_horsedismount", 0.4, 'HorseDismount'); // RDRHorseControls
 		}
 	}
 
@@ -1976,7 +2007,8 @@ state Exploration in W3HorseComponent
 		{
 			if( IsPressed( action ) )			
 			{
-				
+				// RDRHorseControls+++
+				/*
 				if( accelerateTimestamp + DOUBLE_TAP_WINDOW >= theGame.GetEngineTimeAsSeconds() )
 				{
 					triedDoubleTap = true;
@@ -1985,48 +2017,55 @@ state Exploration in W3HorseComponent
 				{
 					triedDoubleTap = false;
 				}
-				
-				if(CanCanter() && (!IsSpeedLocked() || speedLocks.Contains( 'OnAttack' )) )
+				*/
+				if ( accelerateTimestamp + 1.0 >= theGame.GetEngineTimeAsSeconds() || currSpeed <= WALK_SPEED )
 				{
-					if( currSpeed >= CANTER_SPEED )
+					switch ( currSpeed )
 					{
-						destSpeed = CANTER_SPEED;
-						ToggleSpeedLock( 'OnGallop', true );
+						case MIN_SPEED 		:  	destSpeed = TROT_SPEED; break;
+						case SLOW_SPEED 	:  	destSpeed = TROT_SPEED; break;
+						case WALK_SPEED 	:  	destSpeed = TROT_SPEED; break;
+						case TROT_SPEED 	:  	destSpeed = GALLOP_SPEED; break;
 					}
-					else if(triedDoubleTap)
+
+					if(CanCanter() && (!IsSpeedLocked() || speedLocks.Contains( 'OnAttack' )) )
 					{
-						destSpeed = CANTER_SPEED;
-						
-						SpursKick();
-						
-						if( useSimpleStaminaManagement )
-							ToggleSpeedLock( 'OnGallop', true );
-					}
-					
-					if( !FactsDoesExist("debug_fact_stamina_pony") && !useSimpleStaminaManagement )
-					{
-						if( destSpeed > GALLOP_SPEED )
+						if( currSpeed >= GALLOP_SPEED )
 						{
-							actorParent = (CActor)parent.GetEntity();
-							actorParent.DrainStamina( ESAT_Sprint, 0.f, speedTimeoutValue );
-							
-							if( actorParent.GetStat( BCS_Stamina ) < 0.1f )
+							destSpeed = CANTER_SPEED;
+						}
+						
+						if( !FactsDoesExist("debug_fact_stamina_pony") && !useSimpleStaminaManagement )
+						{
+							if( destSpeed > GALLOP_SPEED )
 							{
-								staminaBreak = true;
-								staminaCooldownTimer = 0.f;
+								actorParent = (CActor)parent.GetEntity();
+
+								if( thePlayer.IsInCombat() )
+									actorParent.DrainStamina( ESAT_Sprint, 0.f, 2.0);
+								else
+									actorParent.DrainStamina( ESAT_Sprint, 0.f, 0.5);
+								
+								if( actorParent.GetStat( BCS_Stamina ) < 0.1f )
+								{
+									staminaBreak = true;
+									staminaCooldownTimer = 0.f;
+								}
 							}
 						}
 					}
 				}
 				
+				SpursKick();
 				accelerateTimestamp = theGame.GetEngineTimeAsSeconds();
 				maintainSpeedTimer = 0.f;				
 			}			
 			else if( IsReleased( action ) )
 			{
-				shouldGoToCanterAfterStop = false;
-				ToggleSpeedLock( 'OnGallop', false );
+				// shouldGoToCanterAfterStop = false;
+				// ToggleSpeedLock( 'OnGallop', false );
 			}
+			// RDRHorseControls---
 		}
 	}
 	
@@ -2039,28 +2078,46 @@ state Exploration in W3HorseComponent
 		
 		if( IsHorseControllable() && IsPressed( action ) && !dismountRequest )
 		{	
+		// RDRHorseControls+++
+			ToggleSpeedLock( 'SpeedHold', true );
+			/*
 			if ( !IsSpeedLocked() && OnCanCanter() )
 			{
-				
 				GallopPressed();
 				SpursKick();
 			}
+			*/
 		}
 		else if( IsReleased( action ) )
 		{
-			ToggleSpeedLock( 'OnGallop', false );
+			ToggleSpeedLock( 'SpeedHold', false );
 		}
 		
-		
+		/*
 		if( triedDoubleTap && !CanCanter() && IsPressed( action ) )
 		{
 			thePlayer.DisplayActionDisallowedHudMessage( EIAB_Undefined, , thePlayer.m_SettlementBlockCanter >= 1 );
 		}
+		*/
+		// RDRHorseControls---
 	}
 	
 	event OnDecelerate( action : SInputAction )
 	{
-		if( IsReleased( action ) )
+		// RDRHorseControls+++
+		if( IsPressed( action ) && IsHorseControllable() && !dismountRequest ) {
+			switch ( currSpeed )
+			{
+				case CANTER_SPEED 	:  	destSpeed = GALLOP_SPEED; 	break;  
+				case GALLOP_SPEED 	:  	destSpeed = TROT_SPEED; 	break;	
+				case TROT_SPEED 	:  	destSpeed = WALK_SPEED; 	break;	
+				case WALK_SPEED 	:  	destSpeed = MIN_SPEED;		break;	
+			}
+			if ( currSpeed >= GALLOP_SPEED )
+				PlayVoicesetSlowerHorse();
+			maintainSpeedTimer = 0.f;				
+		}
+		else if( IsReleased( action ) )
 		{
 			if( IsHorseControllable() && !IsRiderInCombatAction() && !dismountRequest )
 			{
@@ -2070,6 +2127,7 @@ state Exploration in W3HorseComponent
 				}
 			}
 		}
+		// RDRHorseControls---
 	}
 	
 	event OnStop( action : SInputAction )
@@ -2077,6 +2135,7 @@ state Exploration in W3HorseComponent
 		if( IsPressed( action ) && IsHorseControllable() && !dismountRequest )
 		{
 			destSpeed = MIN_SPEED;
+			PlayVoicesetSlowerHorse();
 			ToggleSpeedLock( 'OnStop', true );
 			
 			if(ShouldProcessTutorial('TutorialHorseStop'))
@@ -2166,16 +2225,23 @@ state Exploration in W3HorseComponent
 			OnForceStop();
 			parent.user.SetBehaviorVariable('dismountType',0.f);
 		}
+		// RDRHorseControls+++
 		else if( currSpeed >= GALLOP_SPEED && VecLength2D( GetHorseVelocity() ) > 6.0 )
 		{
 			parent.user.SetBehaviorVariable('dismountType',2.f);
+			destSpeed = CANTER_SPEED;
+		}
+		else if ( currSpeed == TROT_SPEED )
+		{
+			parent.user.SetBehaviorVariable('dismountType',1.f);
 			destSpeed = GALLOP_SPEED;
 		}
 		else
 		{
 			parent.user.SetBehaviorVariable('dismountType',1.f);
-			destSpeed = TROT_SPEED;
+			destSpeed = SLOW_SPEED;
 		}
+		// RDRHorseControls---
 		
 		if( !isStopping )
 			parent.IssueCommandToDismount( DT_normal );
@@ -2233,34 +2299,33 @@ state Exploration in W3HorseComponent
 	{
 		switch( currSpeed )
 		{
+			// RDRHorseControls+++
 			case CANTER_SPEED:
-			{
-				if( thePlayer.IsInCombat() )
-					speedTimeoutValue = 2.0;
+				if ( dismountRequest )
+					speedTimeoutValue = 1.0;
 				else
-					speedTimeoutValue = 0.5;
+					speedTimeoutValue = 3.0;
 				break;
-			}
+
 			case GALLOP_SPEED:
-			{
-				if( thePlayer.IsInCombat() )
-					speedTimeoutValue = 2.0;
+				if ( dismountRequest )
+					speedTimeoutValue = 1.0;
 				else
-					speedTimeoutValue = 0.5;
+					speedTimeoutValue = 5.0;
 				break;
-			}
+
 			case TROT_SPEED:
 				if ( dismountRequest )
-					speedTimeoutValue = 0.5;
+					speedTimeoutValue = 1.0;
 				else
-					speedTimeoutValue = 0.0;
+					speedTimeoutValue = 10.0;
 				break;
 			
 			case WALK_SPEED:
 				if ( dismountRequest )
 					speedTimeoutValue = 0.5;
 				else
-					speedTimeoutValue = 0.0;
+					speedTimeoutValue = 10.0;
 				break;
 				
 			case SLOW_SPEED:
@@ -2269,6 +2334,7 @@ state Exploration in W3HorseComponent
 				else
 					speedTimeoutValue = 0.0;
 				break;
+			// RDRHorseControls---
 				
 			case MIN_SPEED:
 				speedTimeoutValue = 0.0;
@@ -2336,27 +2402,33 @@ state Exploration in W3HorseComponent
 	
 	private function SpursKick()
 	{
+		// RDRHorseControls+++
 		if( !IsRiderInCombatAction() && currSpeed < destSpeed )
 		{
-			if( currSpeed != GALLOP_SPEED )
+			if( destSpeed >= GALLOP_SPEED )
 			{
 				PlayVoicesetFasterHorse();
-				
-				if( destSpeed == CANTER_SPEED )
-					parent.GenerateEvent( 'spursKickHard' );
-				else
-					parent.GenerateEvent( 'spursKick' );
 			}
+				
+			if( destSpeed == CANTER_SPEED )
+				parent.GenerateEvent( 'spursKickHard' );
+			else
+				parent.GenerateEvent( 'spursKick' );
 		}
+		if ( currSpeed == CANTER_SPEED )
+			parent.GenerateEvent( 'spursKickHard' );
+		else if ( currSpeed > WALK_SPEED )
+			parent.GenerateEvent( 'spursKick' );
+		// RDRHorseControls---
 	}
 	
 	private var voicsetTimeStamp : float;
 	private var voicsetFasterTimeStamp : float;
 	private var voicsetSlowerTimeSTamp : float;
 	
-	private const var VOICESET_COOLDOWN 		: float; default VOICESET_COOLDOWN			= 2.0;
-	private const var VOICESET_FASTER_COOLDOWN 	: float; default VOICESET_FASTER_COOLDOWN	= 5.0;
-	private const var VOICESET_SLOWER_COOLDOWN 	: float; default VOICESET_SLOWER_COOLDOWN	= 5.0;
+	private const var VOICESET_COOLDOWN 		: float; default VOICESET_COOLDOWN			= 10.0; // RDRHorseControls
+	private const var VOICESET_FASTER_COOLDOWN 	: float; default VOICESET_FASTER_COOLDOWN	= 10.0; // RDRHorseControls
+	private const var VOICESET_SLOWER_COOLDOWN 	: float; default VOICESET_SLOWER_COOLDOWN	= 10.0; // RDRHorseControls
 	
 	private function PlayVoicesetFasterHorse()
 	{
