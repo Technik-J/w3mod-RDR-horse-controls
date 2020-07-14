@@ -1218,7 +1218,7 @@ import class CR4GuiManager extends CGuiManager
 		{
 			if (horseUnmountFeedbackActive)
 			{
-				EnableHudHoldIndicator_Impl(IK_Pad_B_CIRCLE, IK_None, "panel_input_action_horsedismount", 0.4, 'HorseDismount');
+				EnableHudHoldIndicator_Impl(IK_Pad_Y_TRIANGLE, IK_None, "panel_input_action_horsedismount", 0.4, 'HorseDismount'); // RDRHorseControls
 			}
 		}
 		else
