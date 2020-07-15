@@ -2134,7 +2134,7 @@ state Exploration in W3HorseComponent
 				case TROT_SPEED 	:  	destSpeed = WALK_SPEED; 	break;	
 				case WALK_SPEED 	:  	destSpeed = MIN_SPEED;		break;	
 			}
-			if ( currSpeed >= GALLOP_SPEED )
+			if ( !IsRiderInCombatAction() && currSpeed >= GALLOP_SPEED )
 				PlayVoicesetSlowerHorse();
 			maintainSpeedTimer = 0.f;				
 		}
@@ -2156,7 +2156,8 @@ state Exploration in W3HorseComponent
 		if( IsPressed( action ) && IsHorseControllable() && !dismountRequest )
 		{
 			destSpeed = MIN_SPEED;
-			PlayVoicesetSlowerHorse();
+			if ( !IsRiderInCombatAction() )
+				PlayVoicesetSlowerHorse();
 			ToggleSpeedLock( 'OnStop', true );
 			
 			if(ShouldProcessTutorial('TutorialHorseStop'))
@@ -2434,16 +2435,19 @@ state Exploration in W3HorseComponent
 			{
 				PlayVoicesetFasterHorse();
 			}
-				
-			if( destSpeed == CANTER_SPEED )
-				parent.GenerateEvent( 'spursKickHard' );
-			else
-				parent.GenerateEvent( 'spursKick' );
 		}
-		if ( currSpeed == CANTER_SPEED )
+
+		if ( currSpeed < destSpeed  )
+		{
 			parent.GenerateEvent( 'spursKickHard' );
-		else if ( currSpeed > WALK_SPEED )
-			parent.GenerateEvent( 'spursKick' );
+		}
+		else
+		{
+			if ( currSpeed > WALK_SPEED && currSpeed < CANTER_SPEED )
+				parent.GenerateEvent( 'spursKick' );
+			if ( currSpeed == CANTER_SPEED )
+				PlayVoicesetFasterHorse(true);
+		}
 		// RDRHorseControls---
 	}
 	
@@ -2451,11 +2455,11 @@ state Exploration in W3HorseComponent
 	private var voicsetFasterTimeStamp : float;
 	private var voicsetSlowerTimeSTamp : float;
 	
-	private const var VOICESET_COOLDOWN 		: float; default VOICESET_COOLDOWN			= 10.0; // RDRHorseControls: don't say voice over too frequently.
-	private const var VOICESET_FASTER_COOLDOWN 	: float; default VOICESET_FASTER_COOLDOWN	= 10.0; // RDRHorseControls: don't say voice over too frequently.
-	private const var VOICESET_SLOWER_COOLDOWN 	: float; default VOICESET_SLOWER_COOLDOWN	= 10.0; // RDRHorseControls: don't say voice over too frequently.
+	private const var VOICESET_COOLDOWN 		: float; default VOICESET_COOLDOWN			= 2.0;
+	private const var VOICESET_FASTER_COOLDOWN 	: float; default VOICESET_FASTER_COOLDOWN	= 5.0;
+	private const var VOICESET_SLOWER_COOLDOWN 	: float; default VOICESET_SLOWER_COOLDOWN	= 5.0;
 	
-	private function PlayVoicesetFasterHorse()
+	private function PlayVoicesetFasterHorse( optional force : bool)
 	{
 		var currentTime : float = theGame.GetEngineTimeAsSeconds();
 		
@@ -2464,7 +2468,7 @@ state Exploration in W3HorseComponent
 			return;
 		}
 		
-		if ( CanPlayVoiceset(currentTime) && voicsetFasterTimeStamp + VOICESET_FASTER_COOLDOWN <= currentTime && RandRange(100) < 25 )
+		if (( CanPlayVoiceset(currentTime) && voicsetFasterTimeStamp + VOICESET_FASTER_COOLDOWN <= currentTime && RandRange(100) < 25 ) || ( force && CanPlayVoiceset(currentTime) ))
 		{
 			if ( parent.IsPlayerHorse() )
 				thePlayer.PlayVoiceset( 100,'FasterHorseRoach' );
