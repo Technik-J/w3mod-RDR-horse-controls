@@ -346,7 +346,13 @@ class CBTTaskRidingManagerVehicleDismount extends IBehTreeTask
 		}
 		else
 		{
-			dismountDirection = possibleDirections[ RandRange( possibleDirections.Size() ) ];
+			// RDRHorceControls+++
+			// dismountDirection = possibleDirections[ RandRange( possibleDirections.Size() ) ];
+			if( AngleDistance( theCamera.GetCameraHeading(), horseComponent.GetHeading() ) < 0 )
+				dismountDirection = 1;
+			else
+				dismountDirection = 0;
+			// RDRHorceControls---
 		}
 	}
 	
