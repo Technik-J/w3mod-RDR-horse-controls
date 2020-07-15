@@ -752,15 +752,14 @@ state Exploration in W3HorseComponent
 		// 	return false;
 		*/
 
+		if ( dismountRequest )
+			return false;
+
 		// Don't follow road, if left stick has input.
 		if( !stickInputX && !stickInputY )
-		{
 			return true;
-		}	
 		else
-		{
 			return false;
-		}
 		// RDRHorseControls---
 
 	}
